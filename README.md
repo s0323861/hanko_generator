@@ -19,7 +19,7 @@ Web認印を作成するツールです。
 
 ### Demo
 
-  - http://hanko.tsukuba42195.top/
+  - [デモ](https://tsukuba42195.sakura.ne.jp/hanko_generator/)
 
 
 ### Licence
