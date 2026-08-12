@@ -1,27 +1,52 @@
-## Hankoツクール
+# Hankoツクール (hanko_generator)
 
-Web認印を作成するツールです。
+Web上で登録不要・完全無料で電子印鑑（認印・角印・日付印）を作成・ダウンロードできるWebアプリケーションです。
 
-デザインはBootstrap3、Font Awesome Iconsを使っています。
+## 概要
 
-フリーフォント(ダサ字フォント、にくまるフォント)も使わせていただきました。
+Word、Excel、PDFなどの見積書・請求書・各種申請書類にそのまま貼り付け可能な**背景透過PNG画像**を瞬時に生成します。
 
+PHPのGDライブラリを使用して描画処理を行っているため、外部枠画像に依存せず動的に高品質な印影画像を作成できます。
 
-### Usage
+## 特徴・機能
 
-  - upload all files to the web server
+* **3種類の印鑑生成に対応**
+  * **認印（丸印）**: 1〜4文字までの姓に対応（自動レイアウト配置）
+  * **角印（社印）**: 会社名や屋号に対応（自動で「〜之印」などの送り字を調整・二重枠描画）
+  * **日付印（デイト印）**: 上段（部署/目的）、中段（日付）、下段（氏名）の3段構成
+* **柔軟なカスタマイズ**
+  * **印色選択**: 赤 (Red) / 朱 (Vermilion) / 紅 (Crimson) の3色
+  * **フォント切り替え**: にくまるフォント / ダサ字フォント
+* **安心・安全のプライバシー配慮**
+  * 生成された画像および入力データはダウンロード後に即時サーバー上から削除されます。
+* **レスポンシブデザイン**
+  * Bootstrap 5 と Font Awesome 6 を採用し、スマートフォンやPCから快適に利用可能。
 
+## 動作要件
 
-### Features
+* **Webサーバー**: Apache / Nginx 等
+* **PHP**: 7.4 以上（8.x 推奨）
+* **必須PHP拡張モジュール**:
+  * `gd` モジュール（`imagecreatetruecolor`, `imagettftext`, `imagepng` 等を使用）
+  * `mbstring` モジュール
 
-  - written in PHP
+## 設置・利用方法
 
+1. リポジトリをクローンまたはダウンロードします。
+   ```bash
+   git clone [https://github.com/s0323861/hanko_generator.git](https://github.com/s0323861/hanko_generator.git)
+2. Webサーバーのドキュメントルート等に配置します。
+3. fonts/ ディレクトリ内に使用するフォントファイル（.otf や .ttf）を配置します。
+fonts/nikumaru.otf
+fonts/dasaji.ttf
+4. Webブラウザから index.php にアクセスして利用します。
 
-### Demo
+## ディレクトリ構成
+.  
+├── index.php         # フロントエンド（フォーム・解説画面）  
+├── download.php      # 印鑑画像生成・ダウンロード処理 (PHP/GD)  
+├── fonts/            # フォントファイル格納ディレクトリ  
+└── README.md
 
-  - [デモ](https://tsukuba42195.sakura.ne.jp/hanko_generator/)
-
-
-### Licence
-
-  - Copyright 2016 Akira Mukai. Licensed under the MIT License
+## ライセンス
+MIT License
