@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>【無料】電子印鑑・認印・角印・日付印の即時作成ツール｜透過PNG対応 - Hankoツクール</title>
+    <link rel="shortcut icon" href="./favicon.ico">
     <meta name="description" content="登録不要・無料で使える電子印鑑作成ツール「Hankoツクール」。ExcelやWord、PDFの書類にそのまま貼れる高品質な透過PNG印鑑（認印・角印・日付印）を瞬時に作成・ダウンロードできます。">
     <meta name="keywords" content="電子印鑑,無料,認印,角印,日付印,透過PNG,印鑑作成,Excel,Word,PDF,ハンコ生成">
     <meta name="author" content="Akira Mukai">
@@ -14,6 +15,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        @font-face {
+            font-family: 'Nikumaru';
+            src: url('./fonts/nikumaru.otf') format('opentype');
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Dasaji';
+            src: url('./fonts/dasaji.ttf') format('truetype');
+            font-display: swap;
+        }
         body {
             background-color: #f8f9fa;
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
@@ -34,6 +45,349 @@
         }
         .btn-generate {
             background-color: #e63946;
+            border-color: #e63946;
+            color: white;
+            font-weight: bold;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-generate:hover {
+            background-color: #d62828;
+            border-color: #d62828;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.4);
+        }
+        .badge-security {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .step-icon {
+            font-size: 2.5rem;
+            color: #3f2b96;
+            margin-bottom: 1rem;
+        }
+        .preview-panel {
+            background: linear-gradient(135deg, #f8f9fa, #eef1f5);
+            border: 1px solid #dee2e6;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .preview-canvas-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 220px;
+            height: 220px;
+            max-width: 100%;
+            margin-top: 0.5rem;
+            border-radius: 0.75rem;
+            background-color: #fff;
+            background-image:
+                linear-gradient(45deg, #edf0f2 25%, transparent 25%),
+                linear-gradient(-45deg, #edf0f2 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #edf0f2 75%),
+                linear-gradient(-45deg, transparent 75%, #edf0f2 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        #stampPreview {
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ヒーローセクション -->
+    <header class="hero-section text-center">
+        <div class="container">
+            <h1 class="fw-bold mb-3"><i class="fa-solid fa-stamp me-2"></i>Hankoツクール</h1>
+            <p class="lead mb-2">登録不要・完全無料で使えるWEB電子印鑑作成ツール</p>
+            <p class="small opacity-75">認印・角印（社印）・日付印の透過PNG画像を瞬時に生成します</p>
+        </div>
+    </header>
+
+    <main class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-9">
+                
+                <!-- セキュリティ安心宣言 -->
+                <div class="text-center mb-3">
+                    <span class="badge-security">
+                        <i class="fa-solid fa-shield-halved me-1"></i> 安心・安全：作成データはサーバーに保存されず即時削除されます
+                    </span>
+                </div>
+
+                <!-- フォームカード -->
+                <div class="card card-custom p-4 p-md-5">
+                    <form action="./download.php" method="post" id="hankoForm">
+                        
+                        <!-- 印鑑タイプの選択 -->
+                        <div class="mb-4">
+                            <label for="type" class="form-label fw-bold"><i class="fa-solid fa-shapes me-1"></i> 印鑑の種類</label>
+                            <select class="form-select form-select-lg" name="type" id="stampType" onchange="switchType()">
+                                <option value="maru" selected>認印（丸印） - 個人用・認印</option>
+                                <option value="kaku">角印（社印） - 法人・事業主用</option>
+                                <option value="date">日付印（デイト印） - 承認・受領印</option>
+                            </select>
+                        </div>
+
+                        <!-- 1. 丸印用入力エリア -->
+                        <div id="area-maru" class="stamp-input-area">
+                            <div class="mb-4">
+                                <label for="fname" class="form-label fw-bold"><i class="fa-solid fa-pen me-1"></i> 印鑑の文字（姓）</label>
+                                <input type="text" class="form-control form-control-lg" name="fname" id="fname" placeholder="例：山田（1〜4文字）" maxlength="4">
+                                <div class="form-text">※ 1〜4文字の漢字・ひらがな・カタカナに対応しています。</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. 角印用入力エリア -->
+                        <div id="area-kaku" class="stamp-input-area d-none">
+                            <div class="mb-4">
+                                <label for="cname" class="form-label fw-bold"><i class="fa-solid fa-building me-1"></i> 会社名・屋号</label>
+                                <input type="text" class="form-control form-control-lg" name="cname" id="cname" placeholder="例：株式会社サンプル">
+                                <div class="form-text">※ 自動的に「〜之印」などの送り字が末尾に配置されます。</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. 日付印用入力エリア -->
+                        <div id="area-date" class="stamp-input-area d-none">
+                            <div class="mb-3">
+                                <label for="d_top" class="form-label fw-bold"><i class="fa-solid fa-heading me-1"></i> 上段テキスト（部署・目的など）</label>
+                                <input type="text" class="form-control" name="d_top" id="d_top" placeholder="例：承認、受領、営業部" value="承認">
+                            </div>
+                            <div class="mb-3">
+                                <label for="d_date" class="form-label fw-bold"><i class="fa-solid fa-calendar-days me-1"></i> 日付</label>
+                                <input type="date" class="form-control" name="d_date" id="d_date" value="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                            <div class="mb-4">
+                                <label for="d_bottom" class="form-label fw-bold"><i class="fa-solid fa-user me-1"></i> 下段テキスト（氏名など）</label>
+                                <input type="text" class="form-control" name="d_bottom" id="d_bottom" placeholder="例：山田" value="山田">
+                            </div>
+                        </div>
+
+                        <!-- 色選択 -->
+                        <div class="mb-4">
+                            <label for="color" class="form-label fw-bold"><i class="fa-solid fa-palette me-1"></i> 印影の色</label>
+                            <select class="form-select form-select-lg" name="color" id="color">
+                                <option value="aka" selected>赤 (Red) - 定番の標準色</option>
+                                <option value="shu">朱 (Vermilion) - 明るい朱肉色</option>
+                                <option value="beni">紅 (Crimson) - 深みのある深紅</option>
+                            </select>
+                        </div>
+
+                        <!-- フォント選択 -->
+                        <div class="mb-4">
+                            <label for="font" class="form-label fw-bold"><i class="fa-solid fa-font me-1"></i> 書体（フォント）</label>
+                            <select class="form-select form-select-lg" name="font" id="font">
+                                <option value="nikumaru" selected>にくまるフォント（丸みのあるPOPな書体）</option>
+                                <option value="dasaji">ダサ字フォント（手書き風・ユニークな書体）</option>
+                                <option value="genomon">源ノ明朝（明朝体）</option>
+                            </select>
+                        </div>
+
+                        <!-- リアルタイムプレビュー -->
+                        <div class="preview-panel mb-4" aria-live="polite">
+                            <div class="fw-bold"><i class="fa-solid fa-eye me-1"></i> プレビュー</div>
+                            <div class="preview-canvas-wrap">
+                                <canvas id="stampPreview" width="400" height="400" aria-label="電子印鑑のプレビュー"></canvas>
+                            </div>
+                            <div class="form-text mt-2">入力内容はこの画面で確認できます。実際のPNGは透過背景で作成されます。</div>
+                        </div>
+
+                        <!-- ボタン -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-generate btn-lg" type="submit">
+                                <i class="fa-solid fa-download me-2"></i> 電子印鑑を作成＆ダウンロード
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SEOコンテンツ：使い方ガイド -->
+        <section class="mt-5 pt-4">
+            <h2 class="text-center fw-bold mb-4"><i class="fa-solid fa-circle-info me-2"></i>Hankoツクールの使い方・活用方法</h2>
+            <div class="row g-4 text-center">
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded shadow-sm h-100">
+                        <div class="step-icon"><i class="fa-solid fa-keyboard"></i></div>
+                        <h3 class="h5 fw-bold">1. 種類と文字の選択</h3>
+                        <p class="text-muted small">認印・角印・日付印から用途を選び、テキストや日付を入力します。</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded shadow-sm h-100">
+                        <div class="step-icon"><i class="fa-solid fa-file-arrow-down"></i></div>
+                        <h3 class="h5 fw-bold">2. 無料ダウンロード</h3>
+                        <p class="text-muted small">「作成」ボタンを押すと背景が透けた（透過PNG）印鑑画像が保存されます。</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded shadow-sm h-100">
+                        <div class="step-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <h3 class="h5 fw-bold">3. 文書に貼り付け</h3>
+                        <p class="text-muted small">Excel、Word、PDFソフトで「画像を挿入」して配置すれば完了です。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQセクション -->
+        <section class="mt-5">
+            <div class="bg-white p-4 p-md-5 rounded shadow-sm">
+                <h2 class="h4 fw-bold mb-3"><i class="fa-solid fa-circle-question me-2"></i>よくある質問（FAQ）</h2>
+                <div class="mb-3">
+                    <h3 class="h6 fw-bold mb-1">Q. 商用利用やビジネスの書類に使えますか？</h3>
+                    <p class="text-muted small mb-0">はい、完全無料・登録不要で社内書類や請求書・見積書などにご利用いただけます。</p>
+                </div>
+                <div class="mb-3">
+                    <h3 class="h6 fw-bold mb-1">Q. 入力した名前が第三者に漏れる心配はありませんか？</h3>
+                    <p class="text-muted small mb-0">生成処理後、画像ファイルや入力データは即座に自動削除され、サーバーへ蓄積されません。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-4 text-muted border-top mt-5 bg-white">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 <a href="https://github.com/s0323861/hanko_generator" target="_blank" rel="noopener noreferrer">Akira Mukai</a>. All Rights Reserved.<br> - Hankoツクール - </p>
+        </div>
+    </footer>
+
+    <!-- JS: 入力領域切り替え・プレビュー -->
+    <script>
+        function switchType() {
+            const type = document.getElementById('stampType').value;
+            document.querySelectorAll('.stamp-input-area').forEach(el => el.classList.add('d-none'));
+            
+            if (type === 'maru') {
+                document.getElementById('area-maru').classList.remove('d-none');
+            } else if (type === 'kaku') {
+                document.getElementById('area-kaku').classList.remove('d-none');
+            } else if (type === 'date') {
+                document.getElementById('area-date').classList.remove('d-none');
+            }
+            drawPreview();
+        }
+
+        const previewColors = { aka: '#ff0000', shu: '#ff6600', beni: '#cc3333' };
+
+        function selectedFont() {
+            const font = document.getElementById('font').value;
+            if (font === 'dasaji') return 'Dasaji, sans-serif';
+            if (font === 'genomon') return '"Yu Mincho", "Hiragino Mincho ProN", serif';
+            return 'Nikumaru, sans-serif';
+        }
+
+        function drawVerticalText(ctx, text, x, centerY, fontSize, gap) {
+            const chars = Array.from(text);
+            const totalHeight = Math.max(0, (chars.length - 1) * gap);
+            const startY = centerY - totalHeight / 2;
+            ctx.font = `${fontSize}px ${selectedFont()}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            chars.forEach((char, index) => ctx.fillText(char, x, startY + index * gap));
+        }
+
+        function fitText(ctx, text, maxWidth, startSize) {
+            let size = startSize;
+            do {
+                ctx.font = `${size}px ${selectedFont()}`;
+                if (ctx.measureText(text).width <= maxWidth) return size;
+                size -= 2;
+            } while (size > 18);
+            return size;
+        }
+
+        function drawPreview() {
+            const canvas = document.getElementById('stampPreview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const type = document.getElementById('stampType').value;
+            const color = previewColors[document.getElementById('color').value] || previewColors.aka;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (type === 'kaku') {
+                const company = document.getElementById('cname').value.trim();
+                if (!company) return;
+                const text = /(印|之印)$/.test(company) ? company : company + '之印';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(45, 45, 310, 310);
+                ctx.lineWidth = 5;
+                ctx.strokeRect(60, 60, 280, 280);
+                const chars = Array.from(text);
+                const split = Math.ceil(chars.length / 2);
+                const gap = Math.min(55, 230 / Math.max(1, split - 1));
+                drawVerticalText(ctx, chars.slice(0, split).join(''), 245, 200, 48, gap);
+                drawVerticalText(ctx, chars.slice(split).join(''), 155, 200, 48, gap);
+                return;
+            }
+
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.arc(200, 200, 150, 0, Math.PI * 2);
+            ctx.stroke();
+
+            if (type === 'date') {
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(75, 155); ctx.lineTo(325, 155);
+                ctx.moveTo(75, 245); ctx.lineTo(325, 245);
+                ctx.stroke();
+                const fields = [
+                    [document.getElementById('d_top').value.trim(), 115, 52, 210],
+                    [document.getElementById('d_date').value.replaceAll('-', '.'), 200, 38, 245],
+                    [document.getElementById('d_bottom').value.trim(), 290, 52, 210]
+                ];
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                fields.forEach(([text, y, size, maxWidth]) => {
+                    ctx.font = `${fitText(ctx, text, maxWidth, size)}px ${selectedFont()}`;
+                    ctx.fillText(text, 200, y);
+                });
+                return;
+            }
+
+            const chars = Array.from(document.getElementById('fname').value.trim()).slice(0, 4);
+            if (!chars.length) return;
+            if (chars.length <= 3) {
+                drawVerticalText(ctx, chars.join(''), 200, 200, chars.length === 1 ? 130 : 86, chars.length === 3 ? 90 : 105);
+            } else {
+                drawVerticalText(ctx, chars.slice(0, 2).join(''), 245, 200, 78, 105);
+                drawVerticalText(ctx, chars.slice(2).join(''), 155, 200, 78, 105);
+            }
+        }
+
+        document.querySelectorAll('#hankoForm input, #hankoForm select').forEach(element => {
+            element.addEventListener('input', drawPreview);
+            element.addEventListener('change', drawPreview);
+        });
+        if (!document.getElementById('d_date').value) {
+            document.getElementById('d_date').value = new Date().toLocaleDateString('sv-SE');
+        }
+        document.fonts.ready.then(drawPreview);
+        drawPreview();
+    </script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
             border-color: #e63946;
             color: white;
             font-weight: bold;
